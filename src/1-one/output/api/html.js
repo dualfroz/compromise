@@ -60,11 +60,11 @@ const html = function (obj) {
   this.docs.forEach(terms => {
     for (let i = 0; i < terms.length; i += 1) {
       const t = terms[i]
-      // do a span tag
+      out += t.pre || ''
+      // do a span tag, inside the pre-punctuation
       if (Object.hasOwn(starts, t.id)) {
         out += starts[t.id].join('')
       }
-      out += t.pre || ''
       out += t.text || ''
       if (Object.hasOwn(ends, t.id)) {
         out += ends[t.id].join('')

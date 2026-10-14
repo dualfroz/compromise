@@ -59,3 +59,19 @@ test('html-implicit', function (t) {
   t.equal(out, `he's cool`, here + 'implict')
   t.end()
 })
+
+test('html-punctuation', function (t) {
+  let doc = nlp(`This is a "test". Hello "World."`)
+  let html = doc.html({ '.red': '(test|world)' })
+  t.equal(html, `This is a "<span class="red">test</span>". Hello "<span class="red">World</span>."`, here + 'quotes')
+
+  doc = nlp(`he said "hello world" twice`)
+  html = doc.html({ '.red': 'hello world' })
+  t.equal(html, `he said "<span class="red">hello world</span>" twice`, here + 'quoted phrase')
+
+  doc = nlp(`my dog (spot) is cute`)
+  html = doc.html({ '.red': 'spot' })
+  t.equal(html, `my dog (<span class="red">spot</span>) is cute`, here + 'parentheses')
+
+  t.end()
+})
