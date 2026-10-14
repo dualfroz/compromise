@@ -2,6 +2,9 @@
 
 //we have slightly different rules for start/end - like #hashtags.
 const isLetter = /\p{Letter}/u
+const hasMark = /\p{Mark}/u
+// a letter with its combining marks, or any one char
+const splitChars = /\p{Letter}\p{Mark}*|./gsu
 const isNumber = /[\p{Number}\p{Currency_Symbol}]/u
 const hasAcronym = /^[a-z]\.([a-z]\.)+/i
 const chillin = /[sn]['’]$/
@@ -28,7 +31,8 @@ const normalizePunctuation = function (str, model) {
   const original = str
   let pre = ''
   let post = ''
-  const chars = Array.from(str)
+  // keep combining marks on their letter - 'cafe\u0301'
+  const chars = hasMark.test(str) ? str.match(splitChars) : Array.from(str)
   let start = 0
   let end = chars.length
 

@@ -43,3 +43,24 @@ test('fullwidth-ascii', function (t) {
   t.equal(nlp('Ｈｅｌｌｏ ２０２４').text(), 'Ｈｅｌｌｏ ２０２４', here + 'fullwidth text unchanged')
   t.end()
 })
+
+test('combining-marks', function (t) {
+  const arr = [
+    ['caf\u00e9 au lait'.normalize('NFD'), 'cafe\u0301', ' '],
+    ['Poincare\u0301', 'Poincare\u0301', ''],
+    ['E\u0300\u0304 x', 'E\u0300\u0304', ' '],
+    ['(cafe\u0301)', 'cafe\u0301', ')'],
+    ['cafe\u0301!', 'cafe\u0301', '!'],
+    ['\u0928\u092e\u0938\u094d\u0924\u0947 x', '\u0928\u092e\u0938\u094d\u0924\u0947', ' '],
+    ['\u2764\ufe0f x', '\u2764\ufe0f', ' '],
+  ]
+  arr.forEach(a => {
+    const [str, text, post] = a
+    const doc = nlp(str)
+    const term = doc.json()[0].terms[0]
+    t.equal(term.text, text, here + `text "${str}"`)
+    t.equal(term.post, post, here + `post "${str}"`)
+    t.equal(doc.text(), str, here + `identical-text "${str}"`)
+  })
+  t.end()
+})
