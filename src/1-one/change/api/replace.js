@@ -1,3 +1,5 @@
+import fmts from '../../output/api/_fmts.js'
+
 const dollarStub = /\$[0-9a-z]+/g
 const fns = {}
 
@@ -6,10 +8,30 @@ const isTitleCase = (str) => /^\p{Lu}[\p{Ll}'’]/u.test(str) || /^\p{Lu}$/u.tes
 const toTitleCase = (str) => str.replace(/^\p{Ll}/u, x => x.toUpperCase())
 const toLowerCase = (str) => str.replace(/^\p{Lu}/u, x => x.toLowerCase())
 
+// the match's pre and post are kept by replaceWith(), so m.text() should leave them out
+const withoutEnds = function (m) {
+  const text = m.text
+  m.text = fmt => {
+    const opts = typeof fmt === 'string' ? fmts[fmt] : fmt
+    return text.call(m, { keepEndPunct: false, ...opts })
+  }
+  return m
+}
+
+// put the match's own punctuation around the replacement's, unless it already has it
+const outerPre = (pre, fresh) => {
+  const punct = pre.trimStart()
+  return fresh.startsWith(punct) ? pre.slice(0, pre.length - punct.length) + fresh : pre + fresh
+}
+const outerPost = (post, fresh) => {
+  const punct = post.trimEnd()
+  return fresh.endsWith(punct) ? fresh + post.slice(punct.length) : fresh + post
+}
+
 // doc.replace('foo', (m)=>{})
 const replaceByFn = function (main, fn, keep) {
   main.forEach(m => {
-    const out = fn(m)
+    const out = fn(withoutEnds(m))
     m.replaceWith(out, keep)
   })
   return main
@@ -58,13 +80,23 @@ fns.replaceWith = function (input, keep = {}) {
   ptrs = ptrs.map(ptr => ptr.slice(0, 3))
   // original.freeze()
   let oldTags = (original.docs[0] || []).map(term => Array.from(term.tags))
-  const originalPre = original.docs[0][0].pre
-  const originalPost = original.docs[0].at(-1).post
+  const originalEnds = original.docs.map(words => [words[0].pre, words.at(-1).post])
   // slide this in
   if (typeof input === 'string') {
     input = this.fromText(input).compute('id')
   }
+  const fresh = input.docs[0]
   main.insertAfter(input)
+  // keep the punctuation around each match, outside the replacement's own
+  if (fresh) {
+    main.docs.forEach((words, i) => {
+      const [pre, post] = originalEnds[i]
+      words.at(-fresh.length).pre = outerPre(pre, fresh[0].pre.trimStart())
+      if (post) {
+        words.at(-1).post = outerPost(post, fresh.at(-1).post.trimEnd())
+      }
+    })
+  }
   // are we replacing part of a contraction?
   if (original.has('@hasContraction') && main.contractions) {
     const more = main.grow('@hasContraction+')
@@ -84,17 +116,6 @@ fns.replaceWith = function (input, keep = {}) {
     }
   }
 
-  // try to keep some pre-punctuation
-  if (originalPre && main.docs[0]) {
-    main.docs[0][0].pre = originalPre
-  }
-  // try to keep any post-punctuation
-  if (originalPost && main.docs[0]) {
-    const lastOne = main.docs[0].at(-1)
-    if (!lastOne.post.trim()) {
-      lastOne.post = originalPost
-    }
-  }
   // what should we return?
   const m = main.toView(ptrs).compute(['index', 'freeze', 'lexicon'])
   if (m.world.compute.preTagger) {

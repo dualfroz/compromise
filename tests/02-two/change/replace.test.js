@@ -225,3 +225,43 @@ test('replace-with-pre-post', function (t) {
 
   t.end()
 })
+
+test('replace-edge-punctuation', function (t) {
+  let arr = [
+    ['"hello world" he said', '"[x]" he said'],
+    ['he said "hello world" today', 'he said "[x]" today'],
+    ['he said "hello world"', 'he said "[x]"'],
+    ['(hello world) he said', '([x]) he said'],
+    ['he said (hello world) today', 'he said ([x]) today'],
+    ['he said hello world.', 'he said [x].'],
+    ['"hello world" and "hello world" too', '"[x]" and "[x]" too'],
+  ]
+  arr.forEach(a => {
+    const doc = nlp(a[0])
+    doc.replace('hello world', '[x]')
+    t.equal(doc.text(), a[1], here + 'string: ' + a[0])
+  })
+
+  arr = [
+    ['"hello world" he said', '"HELLO WORLD" he said'],
+    ['he said "hello world" today', 'he said "HELLO WORLD" today'],
+    ['he said "hello world"', 'he said "HELLO WORLD"'],
+    ['(hello world) he said', '(HELLO WORLD) he said'],
+    ['hello world.', 'HELLO WORLD.'],
+    ['"hello world" and "hello world" too', '"HELLO WORLD" and "HELLO WORLD" too'],
+  ]
+  arr.forEach(a => {
+    const doc = nlp(a[0])
+    doc.replace('hello world', m => m.text().toUpperCase())
+    t.equal(doc.text(), a[1], here + 'function: ' + a[0])
+  })
+
+  let doc = nlp('"hello world" he said')
+  doc.replace('hello world', m => '[' + m.text() + ']')
+  t.equal(doc.text(), '"[hello world]" he said', here + 'function with brackets')
+
+  doc = nlp('he said "hello" today')
+  doc.replace('hello', '"hi"')
+  t.equal(doc.text(), 'he said "hi" today', here + 'quotes already in replacement')
+  t.end()
+})
