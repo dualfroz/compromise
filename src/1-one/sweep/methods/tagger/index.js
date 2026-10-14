@@ -47,7 +47,8 @@ const tagger = function (list, document, world) {
       }
     }
     if (todo.unTag !== undefined) {
-      unTag(terms, todo.unTag, model.one.tagSet, reason)
+      const tags = Array.isArray(todo.unTag) ? todo.unTag : [todo.unTag]
+      tags.forEach(tag => unTag(terms, tag, model.one.tagSet, reason))
     }
     // allow setting chunks, too
     if (todo.chunk) {

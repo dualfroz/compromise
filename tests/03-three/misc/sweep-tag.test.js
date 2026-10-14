@@ -38,3 +38,21 @@ test('sweep-freeze:', function (t) {
   t.equal(m.has('#Adjective'), false, here + 'front steps frozen')
   t.end()
 })
+
+test('sweep-untag:', function (t) {
+  const matches = [
+    { match: 'clinic', unTag: ['ProperNoun', 'Person'] },
+    { match: 'walked', unTag: 'Verb' },
+  ]
+  const net = nlp.buildNet(matches)
+  let doc = nlp('There are thirty days in the January Clinic')
+  doc.sweep(net)
+  const m = doc.match('clinic')
+  t.equal(m.has('#ProperNoun'), false, here + 'untag array first')
+  t.equal(m.has('#Person'), false, here + 'untag array second')
+
+  doc = nlp('Spencer walked')
+  doc.sweep(net)
+  t.equal(doc.has('#PastTense'), false, here + 'untag children')
+  t.end()
+})
