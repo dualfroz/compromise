@@ -42,3 +42,25 @@ test('out-wrap', function (t) {
   t.equal(out, `before (few more words) after`, here + 'pre+post')
   t.end()
 })
+
+test('out-wrap-punctuation', function (t) {
+  const arr = [
+    [`"hello world" he said`, `"[hello world]" he said`],
+    [`he said "hello world" today`, `he said "[hello world]" today`],
+    [`he said "hello world"`, `he said "[hello world]"`],
+    [`(hello world) he said`, `([hello world]) he said`],
+    [`he said (hello world) today`, `he said ([hello world]) today`],
+    [`he said (hello world).`, `he said ([hello world]).`],
+    [`hello world, he said`, `[hello world], he said`],
+    [`he left. "hello world" she said`, `he left. "[hello world]" she said`],
+    [`"hello world."`, `"[hello world]."`],
+  ]
+  arr.forEach(function (a) {
+    const doc = nlp(a[0])
+    t.equal(doc.out({ 'hello world': m => `[${m.text()}]` }), a[1], here + 'text: ' + a[0])
+    t.equal(doc.wrap({ 'hello world': m => `[${m.out('normal')}]` }), a[1], here + 'normal: ' + a[0])
+  })
+  const out = nlp(`"Hello World" he said`).wrap({ 'hello world': m => `[${m.text('normal')}]` })
+  t.equal(out, `"[hello world]" he said`, here + 'keeps text format')
+  t.end()
+})

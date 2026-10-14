@@ -1,7 +1,19 @@
+import fmts from './_fmts.js'
+
 const toText = function (term) {
   const pre = term.pre || ''
   const post = term.post || ''
   return pre + term.text + post
+}
+
+// the match's pre and post are added around fn(m), so m.text() should leave them out
+const withoutEnds = function (m) {
+  const text = m.text
+  m.text = fmt => {
+    const opts = typeof fmt === 'string' ? fmts[fmt] : fmt
+    return text.call(m, { keepEndPunct: false, ...opts })
+  }
+  return m
 }
 
 const findStarts = function (doc, obj) {
@@ -25,7 +37,7 @@ const wrap = function (doc, obj) {
       // do a span tag
       if (Object.hasOwn(starts, t.id)) {
         const { fn, end } = starts[t.id]
-        const m = doc.update([[n, i, end]])
+        const m = withoutEnds(doc.update([[n, i, end]]))
         text += terms[i].pre || ''
         text += fn(m)
         i = end - 1
